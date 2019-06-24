@@ -35,16 +35,19 @@ Global $iProgressBar
 Global $hGUI,$Progress_1,$Icon_2,$Label_3
 
 if $CmdLine[0] < 1 Then
-	Echo( "Ejecutar: runbatch <archivo bat a ejecutar>")
+	Echo( "Ejecutar: runbatch <archivo bat a ejecutar> [titulo de la ventana] [mensaje]")
 	Exit
 Else 
 	$BatFile 	= $CmdLine[1]
+    $WinTitle   = _CmdLine_GetValByIndex(2, "Ejecutando proceso..")
+    $WinMsg     = _CmdLine_GetValByIndex(3, "Se está procesando su solicitud. Aguarde por favor...")
 EndIf
 
 if Not FileExists($BatFile) then
 	Echo("Error: No existe el archivo: " & $BatFile)
 	Exit
 Endif
+
 
 Ejecutar()
 
@@ -57,19 +60,23 @@ Exit
 
 Func Ejecutar()
 
-    
-    create_form($WinTitle, "Se está procesando su solicitud. Aguarde por favor...")
-    ;main_loop()
+    $hGUI=GuiCreate($WinTitle, 466, 130, -1, -1, $DS_MODALFRAME)
+    $Label_2 = GuiCtrlCreateLabel($WinMsg, 20, 20, 420, 40,bitor($SS_CENTER,0,0))
+    $iProgressBar = GuiCtrlCreateProgress(20, 70, 420, 20,  $PBS_MARQUEE)
+    GUISetState(@SW_SHOW)
 
+    _ProgressMarquee_Start($iProgressBar) ;Start
+    RunBatch($BatFile)
+    _ProgressMarquee_Stop($iProgressBar) ;Stop
+    GUIDelete($hGUI)
     
-EndFunc   ;==>Example
+EndFunc
 
 Func RunBatch($BatFile)
     Local $iReturn = RunWait( $BatFile, "", @SW_HIDE)
     WinClose($WinTitle)
     ;MsgBox($MB_SYSTEMMODAL, "", "The return code  was: " & $iReturn)
 EndFunc
-
 
 Func Echo( $strMensajeUsuario )
 
@@ -94,34 +101,6 @@ Func FileLog($Data, $FileName = -1, $TimeStamp = False)
 EndFunc
 
 
-func create_form($WinTitle, $Label)
-    $hGUI=GuiCreate($WinTitle, 466, 130, -1, -1, $DS_MODALFRAME)
-    $Label_2 = GuiCtrlCreateLabel($Label, 20, 20, 420, 40,bitor($SS_CENTER,0,0))
-    $iProgressBar = GuiCtrlCreateProgress(20, 70, 420, 20,  $PBS_MARQUEE)
-    GUISetState(@SW_SHOW)
-
-    _ProgressMarquee_Start($iProgressBar) ;Start
-    RunBatch($BatFile)
-    _ProgressMarquee_Stop($iProgressBar) ;Stop
-    GUIDelete($hGUI)
-    
-endfunc
-
-func main_loop()
-
-    Local $Run = True
-    While 1
-
-
-        $msg = GuiGetMsg()
-        Select
-            Case $msg = $GUI_EVENT_CLOSE
-                ExitLoop
-            Case Else
-        EndSelect
-    WEnd
-
-endfunc
 
 ; #FUNCTION# ====================================================================================================================
 ; Name ..........: _ProgressMarquee_Start
@@ -157,3 +136,11 @@ Func _ProgressMarquee_Stop($iControlID, $bReset = False)
     Return $bReturn
 EndFunc   ;==>_ProgressMarquee_Stop
 
+
+Func _CmdLine_GetValByIndex($iIndex, $mDefault = Null)
+   If $CmdLine[0] >= $iIndex Then
+      Return $CmdLine[$iIndex]
+   Else
+      Return $mDefault
+   EndIf
+EndFunc
